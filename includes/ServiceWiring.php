@@ -1,9 +1,12 @@
 <?php
 
 use MediaWiki\MediaWikiServices;
-use MWStake\MediaWiki\Component\ProcessManager\IProcessQueue;
-use MWStake\MediaWiki\Component\ProcessManager\ProcessManager;
 
 return [
 
+	'MWStake.WikiCronManager' => static function ( MediaWikiServices $services ) {
+		return new MWStake\MediaWiki\Component\WikiCron\WikiCronManager(
+			$services->getDBLoadBalancer()
+		);
+	},
 ];

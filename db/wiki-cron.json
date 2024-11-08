@@ -67,9 +67,9 @@
 		"columns": [
 			{
 				"name": "wch_cron",
-				"type": "integer",
+				"type": "binary",
 				"options": {
-					"unsigned": true,
+					"length": 255,
 					"notnull": true
 				}
 			},
@@ -81,17 +81,11 @@
 				}
 			},
 			{
-				"name": "wch_output",
-				"type": "text",
+				"name": "wch_pid",
+				"type": "binary",
 				"options": {
-					"notnull": false
-				}
-			},
-			{
-				"name": "wch_exitcode",
-				"type": "mwtinyint",
-				"options": {
-					"notnull": false
+					"length": 128,
+					"notnull": true
 				}
 			}
 		],

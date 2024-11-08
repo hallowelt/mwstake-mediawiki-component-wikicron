@@ -2,7 +2,7 @@
 -- Source: db/wiki-cron.json
 -- Do not modify this file directly.
 -- See https://www.mediawiki.org/wiki/Manual:Schema_changes
-CREATE TABLE /*_*/wiki_cron (
+CREATE TABLE IF NOT EXISTS /*_*/wiki_cron (
   wc_id INT UNSIGNED AUTO_INCREMENT NOT NULL,
   wc_name VARBINARY(255) NOT NULL,
   wc_interval VARBINARY(255) NOT NULL,
@@ -14,9 +14,8 @@ CREATE TABLE /*_*/wiki_cron (
 ) /*$wgDBTableOptions*/;
 
 
-CREATE TABLE /*_*/wiki_cron_history (
-  wch_cron INT UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS /*_*/wiki_cron_history (
+  wch_cron VARBINARY(255) NOT NULL,
   wch_time BINARY(14) NOT NULL,
-  wch_output LONGTEXT DEFAULT NULL,
-  wch_exitcode TINYINT DEFAULT NULL
+  wch_pid VARBINARY(128) NOT NULL
 ) /*$wgDBTableOptions*/;

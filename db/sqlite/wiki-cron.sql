@@ -12,7 +12,6 @@ CREATE TABLE /*_*/wiki_cron (
 
 
 CREATE TABLE /*_*/wiki_cron_history (
-  wch_cron INTEGER UNSIGNED NOT NULL,
-  wch_time BLOB NOT NULL, wch_output CLOB DEFAULT NULL,
-  wch_exitcode SMALLINT DEFAULT NULL
+  wch_cron BLOB NOT NULL, wch_time BLOB NOT NULL,
+  wch_pid BLOB NOT NULL
 );

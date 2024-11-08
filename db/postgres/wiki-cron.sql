@@ -15,6 +15,6 @@ CREATE TABLE wiki_cron (
 
 
 CREATE TABLE wiki_cron_history (
-  wch_cron INT NOT NULL, wch_time TIMESTAMPTZ NOT NULL,
-  wch_output TEXT DEFAULT NULL, wch_exitcode SMALLINT DEFAULT NULL
+  wch_cron TEXT NOT NULL, wch_time TIMESTAMPTZ NOT NULL,
+  wch_pid TEXT NOT NULL
 );

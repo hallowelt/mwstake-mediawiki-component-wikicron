@@ -25,6 +25,7 @@ Bootstrapper::getInstance()
 			);
 		};
 		$GLOBALS['mwsgProcessManagerPlugins']['wikicron'] = [
-			'class' => 'MWStake\MediaWiki\Component\WikiCron\WikiCronPlugin'
+			'class' => 'MWStake\MediaWiki\Component\WikiCron\WikiCronPlugin',
+			'services' => [ 'MWStake.WikiCronManager' ]
 		];
 	} );
