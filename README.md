@@ -2,7 +2,7 @@
 Mechanism for executing scheduled tasks in MediaWiki
 
 This allows extension to run [ProcessManager processes](https://github.com/hallowelt/mwstake-mediawiki-component-processmanager/blob/main/README.md)
-processes on a schedule, using standard crontab expression.
+ on a schedule, using standard crontab expression.
 
 ## Declare a cron
 
@@ -31,7 +31,7 @@ See what crons are declared and their statuses.
 ## List crons
 
 ```bash
-> php maintenance/wikiCron.php --list
+> php maintenance/wikiCron.php
 --------------------------------------------------------------------------------------------------------------
 Interval            Cron key                                Enabled   Last run                 Last Status
 --------------------------------------------------------------------------------------------------------------
