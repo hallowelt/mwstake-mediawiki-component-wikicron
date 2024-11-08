@@ -17,11 +17,11 @@ Bootstrapper::getInstance()
 
 			$updater->addExtensionTable(
 				'wiki_cron',
-				__DIR__ . '/db' . $dbType . '/wiki-cron.sql'
+				__DIR__ . '/db/' . $dbType . '/wiki-cron.sql'
 			);
 			$updater->addExtensionTable(
 				'wiki_cron_history',
-				__DIR__ . '/db' . $dbType . '/wiki-cron.sql'
+				__DIR__ . '/db/' . $dbType . '/wiki-cron.sql'
 			);
 		};
 		$GLOBALS['mwsgProcessManagerPlugins']['wikicron'] = [
