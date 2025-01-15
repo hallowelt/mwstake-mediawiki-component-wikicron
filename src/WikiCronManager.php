@@ -65,18 +65,26 @@ class WikiCronManager {
 	 * @return void
 	 */
 	public function setInterval( string $key, string $interval ) {
-		$ce = new CronExpression( $interval );
-		if ( !$ce->isValid() ) {
-			throw new \InvalidArgumentException( 'Invalid cron expression' );
-		}
 		if ( !$this->hasCron( $key ) ) {
 			throw new \InvalidArgumentException( 'Cron not found' );
 		}
-		$this->lb->getConnection( DB_PRIMARY )->update(
-			'wiki_cron',
-			[ 'wc_interval' => $interval ],
-			[ 'wc_name' => $key ]
-		);
+		if ( $interval !== 'default' ) {
+			$ce = new CronExpression( $interval );
+			if ( !$ce->isValid() ) {
+				throw new \InvalidArgumentException( 'Invalid cron expression' );
+			}
+			$this->lb->getConnection( DB_PRIMARY )->update(
+				'wiki_cron',
+				[ 'wc_manual_interval' => $interval ],
+				[ 'wc_name' => $key ]
+			);
+		} else {
+			$this->lb->getConnection( DB_PRIMARY )->update(
+				'wiki_cron',
+				[ 'wc_manual_interval' => null ],
+				[ 'wc_name' => $key ]
+			);
+		}
 	}
 
 	/**
@@ -204,10 +212,14 @@ class WikiCronManager {
 		}
 		$res = $db->select(
 			'wiki_cron',
-			[ 'wc_name', 'wc_interval' ],
+			[ 'wc_name', 'wc_interval', 'wc_manual_interval' ],
 			$conds
 		);
 		foreach ( $res as $row ) {
+			if ( $row->wc_manual_interval ) {
+				$intervals[$row->wc_name] = $row->wc_manual_interval;
+				continue;
+			}
 			$intervals[$row->wc_name] = $row->wc_interval;
 		}
 		return $intervals;

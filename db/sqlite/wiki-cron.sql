@@ -7,7 +7,7 @@ CREATE TABLE /*_*/wiki_cron (
   wc_name BLOB NOT NULL, wc_interval BLOB NOT NULL,
   wc_enabled SMALLINT UNSIGNED NOT NULL,
   wc_last_run BLOB DEFAULT NULL, wc_steps CLOB DEFAULT NULL,
-  wc_timeout INTEGER NOT NULL
+  wc_timeout INTEGER NOT NULL, wc_manual_interval BLOB DEFAULT NULL
 );
 
 

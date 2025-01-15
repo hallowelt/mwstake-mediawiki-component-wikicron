@@ -12,7 +12,7 @@ Bootstrapper::getInstance()
 	->register( 'wikicron', static function () {
 		$GLOBALS['wgServiceWiringFiles'][] = __DIR__ . '/includes/ServiceWiring.php';
 
-		$GLOBALS['wgExtensionFunctions'][] = static function() {
+		$GLOBALS['wgExtensionFunctions'][] = static function () {
 			$hookContainer = \MediaWiki\MediaWikiServices::getInstance()->getHookContainer();
 			$hookContainer->register( 'LoadExtensionSchemaUpdates', static function ( DatabaseUpdater $updater ) {
 				$dbType = $updater->getDB()->getType();

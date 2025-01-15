@@ -10,6 +10,7 @@ CREATE TABLE wiki_cron (
   wc_last_run TIMESTAMPTZ DEFAULT NULL,
   wc_steps TEXT DEFAULT NULL,
   wc_timeout INT NOT NULL,
+  wc_manual_interval TEXT DEFAULT NULL,
   PRIMARY KEY(wc_id)
 );
 

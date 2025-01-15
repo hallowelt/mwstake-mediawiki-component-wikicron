@@ -55,6 +55,14 @@
 				"options": {
 					"notnull": true
 				}
+			},
+			{
+				"name": "wc_manual_interval",
+				"type": "binary",
+				"options": {
+					"length": 255,
+					"notnull": false
+				}
 			}
 		],
 		"indexes": [],

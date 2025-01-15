@@ -5,7 +5,11 @@ use MWStake\MediaWiki\Component\ProcessManager\ProcessManager;
 use MWStake\MediaWiki\Component\WikiCron\WikiCronManager;
 use Wikimedia\Rdbms\IResultWrapper;
 
-//phpcs:disable MediaWiki.NamingConventions.PrefixedGlobalFunctions.wfPrefix
+//phpcs:disable MediaWiki.NamingConventions.PrefixedGlobalFunctions.allowedPrefix
+
+/**
+ * @return string
+ */
 function getMaintenancePath() {
 	if ( isset( $argv[1] ) && file_exists( $argv[1] ) ) {
 		return $argv[1];
@@ -91,7 +95,7 @@ class WikiCron extends Maintenance {
 
 		$this->output( str_repeat( '-', 110 ) . "\n" );
 		$this->output(
-			str_pad( 'Interval', 20 ) .
+			str_pad( 'Interval', 22 ) .
 			str_pad( 'Cron key', 40 ) .
 			str_pad( 'Enabled', 10 ) .
 			str_pad( 'Last run', 25 ) .
@@ -101,7 +105,7 @@ class WikiCron extends Maintenance {
 		foreach ( $crons as $cron ) {
 			$cron = $this->getCronInfo( $cron, $manager );
 			$this->output(
-				str_pad( $cron['wc_interval'], 20 ) .
+				str_pad( $cron['wc_interval'], 22 ) .
 				str_pad( $cron['wc_name'], 40 ) .
 				str_pad( $cron['wc_enabled'], 10 ) .
 				str_pad( $cron['last_run'], 25 ) .
@@ -122,7 +126,8 @@ class WikiCron extends Maintenance {
 			$lastRun['time']->format( 'Y-m-d H:i:s' ) : 'Never';
 		return [
 			'wc_name' => $cron['wc_name'],
-			'wc_interval' => $cron['wc_interval'],
+			'wc_interval' => $cron['wc_manual_interval'] ?
+				$cron['wc_manual_interval'] . ' (ovr)' : $cron['wc_interval'],
 			'wc_enabled' => $cron['wc_enabled'] ? 'Yes' : 'No',
 			'wc_steps' => json_encode( json_decode( $cron['wc_steps'], true ), JSON_PRETTY_PRINT ),
 			'last_run' => $lastRun['time'],
@@ -150,13 +155,16 @@ class WikiCron extends Maintenance {
 		$this->output( "Cron \"$name\" enabled!\n" );
 	}
 
+	/**
+	 * @param array $cron
+	 * @param WikiCronManager $manager
+	 * @return void
+	 */
 	private function outputCronInfo( array $cron, WikiCronManager $manager ) {
 		$info = $this->getCronInfo( $cron, $manager );
 
-
-
 		$this->output( "Cron key: {$cron['wc_name']}\n" );
-		$this->output( "Interval: {$cron['wc_interval']}\n" );
+		$this->output( "Interval: {$info['wc_interval']}\n" );
 		$this->output( "Enabled: {$cron['wc_enabled']}\n" );
 		$this->output( "Last run: {$info['last_run']}\n" );
 		$this->output( "Last status: {$info['last_status']}\n" );

@@ -39,6 +39,8 @@ Interval            Cron key                                Enabled   Last run  
 -------------------------------------------------------------------------------------------------------------- 
 ``` 
 
+Note: If interval was manually override, it will be marked with `(ovr)` in the list/details.
+
 ## Get full info and history on a cron
     
 ```bash
@@ -97,3 +99,11 @@ Enable a cron
 Set interval
 
     > php maintenance/wikiCron.php --name=notify --interval="*/10 * * * *"
+
+Reset interval to default
+
+    > php maintenance/wikiCron.php --name=notify --interval="default"
+
+Force run
+
+    > php maintenance/wikiCron.php --name=notify --force-run
