@@ -1,6 +1,7 @@
 <?php
 
 use MediaWiki\MediaWikiServices;
+use MWStake\MediaWiki\Component\ProcessManager\ProcessManager;
 use MWStake\MediaWiki\Component\WikiCron\WikiCronManager;
 use Wikimedia\Rdbms\IResultWrapper;
 
@@ -21,6 +22,8 @@ class WikiCron extends Maintenance {
 		$this->addOption( 'name', 'Name of the cron to get information about', false, true );
 		$this->addOption( 'disable', 'Disable cron' );
 		$this->addOption( 'enable', 'Enable cron' );
+		$this->addOption( 'interval', 'Set cron interval', false, true );
+		$this->addOption( 'force-run', 'Force run a cron' );
 	}
 
 	/**
@@ -39,6 +42,16 @@ class WikiCron extends Maintenance {
 				$this->enableCron( $name, $manager );
 				return;
 			}
+			if ( $this->hasOption( 'interval' ) ) {
+				$interval = $this->getOption( 'interval' );
+				$manager->setInterval( $name, $interval );
+				$this->output( "Cron \"$name\" interval set to \"$interval\"\n" );
+				return;
+			}
+			if ( $this->hasOption( 'force-run' ) ) {
+				$this->forceRun( $name, $manager );
+				return;
+			}
 			try {
 				$cron = $manager->getCron( $name );
 				$history = $manager->getHistory( $name );
@@ -53,6 +66,20 @@ class WikiCron extends Maintenance {
 			return;
 		}
 		$this->outputList( $manager );
+	}
+
+	/**
+	 * @param string $name
+	 * @param WikiCronManager $manager
+	 * @return void
+	 */
+	private function forceRun( string $name, WikiCronManager $manager ) {
+		$cron = $manager->getProcessFromCronName( $name );
+		/** @var ProcessManager $processManager */
+		$processManager = MediaWikiServices::getInstance()->getService( 'ProcessManager' );
+		$pid = $processManager->startProcess( $cron );
+		$manager->storeHistory( $name, $pid );
+		$this->output( "Started process: $pid" );
 	}
 
 	/**
@@ -99,7 +126,7 @@ class WikiCron extends Maintenance {
 			'wc_enabled' => $cron['wc_enabled'] ? 'Yes' : 'No',
 			'wc_steps' => json_encode( json_decode( $cron['wc_steps'], true ), JSON_PRETTY_PRINT ),
 			'last_run' => $lastRun['time'],
-			'last_status' => $lastRun['status'],
+			'last_status' => $lastRun['exitstatus'] ?? '-',
 		];
 	}
 

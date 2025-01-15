@@ -30,6 +30,9 @@ class WikiCronManager {
 	 * @return void
 	 */
 	public function registerCron( string $key, string $interval, ManagedProcess $process ) {
+		if ( !$this->isSetUp() ) {
+			return;
+		}
 		$ce = new CronExpression( $interval );
 		if ( !$ce->isValid() ) {
 			throw new \InvalidArgumentException( 'Invalid cron expression' );
@@ -57,13 +60,33 @@ class WikiCronManager {
 	}
 
 	/**
+	 * @param string $key
+	 * @param string $interval
+	 * @return void
+	 */
+	public function setInterval( string $key, string $interval ) {
+		$ce = new CronExpression( $interval );
+		if ( !$ce->isValid() ) {
+			throw new \InvalidArgumentException( 'Invalid cron expression' );
+		}
+		if ( !$this->hasCron( $key ) ) {
+			throw new \InvalidArgumentException( 'Cron not found' );
+		}
+		$this->lb->getConnection( DB_PRIMARY )->update(
+			'wiki_cron',
+			[ 'wc_interval' => $interval ],
+			[ 'wc_name' => $key ]
+		);
+	}
+
+	/**
 	 * @param string $name
 	 * @return DateTime|null
 	 */
 	public function getLastRun( string $name ): array {
 		$row = $this->lb->getConnection( DB_REPLICA )->selectRow(
 			[ 'wch' => 'wiki_cron_history', 'p' => 'processes' ],
-			[ 'wch_time', 'p_state' ],
+			[ 'wch_time', 'p_state', 'p_exitstatus' ],
 			[ 'wch_cron' => $name ],
 			__METHOD__,
 			[ 'ORDER BY' => 'wch_time DESC' ],
@@ -84,7 +107,8 @@ class WikiCronManager {
 		}
 		return [
 			'time' => $lr,
-			'status' => $row->p_state
+			'status' => $row->p_state,
+			'exitstatus' => $row->p_exitstatus
 		];
 	}
 
@@ -252,9 +276,15 @@ class WikiCronManager {
 	 * @param string $name
 	 * @return ManagedProcess
 	 */
-	private function getProcessFromCronName( string $name ): ManagedProcess {
+	public function getProcessFromCronName( string $name ): ManagedProcess {
 		$cron = $this->getCron( $name );
 		return new ManagedProcess( json_decode( $cron['wc_steps'], true ), (int)$cron['wc_timeout'] );
 	}
 
+	/**
+	 * @return bool
+	 */
+	private function isSetUp(): bool {
+		return $this->lb->getConnection( DB_REPLICA )->tableExists( 'wiki_cron' );
+	}
 }

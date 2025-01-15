@@ -93,3 +93,7 @@ Disable a cron
 Enable a cron
     
     > php maintenance/wikiCron.php --name=notify --enable
+
+Set interval
+
+    > php maintenance/wikiCron.php --name=notify --interval="*/10 * * * *"
