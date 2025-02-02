@@ -3,6 +3,7 @@
 namespace MWStake\MediaWiki\Component\WikiCron;
 
 use DateTime;
+use DeferredUpdates;
 use Exception;
 use MWStake\MediaWiki\Component\ProcessManager\ManagedProcess;
 use Poliander\Cron\CronExpression;
@@ -17,10 +18,20 @@ class WikiCronManager {
 	protected $lb;
 
 	/**
+	*  @var array
+	*/
+	private $registry = [];
+
+	/**
 	 * @param ILoadBalancer $lb
 	 */
 	public function __construct( ILoadBalancer $lb ) {
 		$this->lb = $lb;
+		DeferredUpdates::addCallableUpdate( function () {
+			foreach ( $this->registry as $key => $data ) {
+				$this->doRegisterCron( $key, $data['interval'], $data['process'] );
+			}
+		} );
 	}
 
 	/**
@@ -30,6 +41,19 @@ class WikiCronManager {
 	 * @return void
 	 */
 	public function registerCron( string $key, string $interval, ManagedProcess $process ) {
+		$this->registry[$key] = [
+			'interval' => $interval,
+			'process' => $process
+		];
+	}
+
+	/**
+	 * @param string $key
+	 * @param string $interval
+	 * @param ManagedProcess $process
+	 * @return void
+	 */
+	private function doRegisterCron( string $key, string $interval, ManagedProcess $process ) {
 		if ( !$this->isSetUp() ) {
 			return;
 		}
