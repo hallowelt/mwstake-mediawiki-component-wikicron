@@ -18,8 +18,8 @@ class WikiCronManager {
 	protected $lb;
 
 	/**
-	*  @var array
-	*/
+	 * @var array
+	 */
 	private $registry = [];
 
 	/**
