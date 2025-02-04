@@ -61,20 +61,20 @@ class WikiCronManager {
 		if ( !$ce->isValid() ) {
 			throw new \InvalidArgumentException( 'Invalid cron expression' );
 		}
-		$has = $this->hasCron( $key );
 		$data = [
 			'wc_name' => $key,
 			'wc_interval' => $interval,
 			'wc_steps' => json_encode( $process->getSteps() ),
 			'wc_timeout' => $process->getTimeout()
 		];
-		if ( $has ) {
+		$hasChanges = $this->hasChanges( $key, $data );
+		if ( $hasChanges === true ) {
 			$this->lb->getConnection( DB_PRIMARY )->update(
 				'wiki_cron',
 				$data,
 				[ 'wc_name' => $key ]
 			);
-		} else {
+		} elseif ( $hasChanges === null ) {
 			$data['wc_enabled'] = 1;
 			$this->lb->getConnection( DB_PRIMARY )->insert(
 				'wiki_cron',
@@ -306,6 +306,20 @@ class WikiCronManager {
 			'1',
 			[ 'wc_name' => $key ]
 		);
+	}
+
+	/**
+	 * @param string $key
+	 * @param array $data
+	 * @return bool|null null if cannot find cron, true if has changes, false if no changes
+	 */
+	private function hasChanges( string $key, array $data ): ?bool {
+		$cron = $this->getCron( $key );
+		if ( !$cron ) {
+			return null;
+		}
+		$diff = array_diff_assoc( $data, $cron );
+		return !empty( $diff );
 	}
 
 	/**
