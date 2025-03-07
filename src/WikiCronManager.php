@@ -200,7 +200,10 @@ class WikiCronManager {
 		$due = array_unique( $due );
 		$processes = [];
 		foreach ( $due as $name ) {
-			$processes[$name] = $this->getProcessFromCronName( $name );
+			$process = $this->getProcessFromCronName( $name );
+			if ( $process ) {
+				$processes[$name] = $process;
+			}
 		}
 		return $processes;
 	}
@@ -269,14 +272,14 @@ class WikiCronManager {
 	 * @param string $key
 	 * @return array
 	 */
-	public function getCron( string $key ): array {
+	public function getCron( string $key ): ?array {
 		$row = $this->lb->getConnection( DB_REPLICA )->selectRow(
 			'wiki_cron',
 			'*',
 			[ 'wc_name' => $key ]
 		);
 		if ( !$row ) {
-			throw new \InvalidArgumentException( 'Cron not found' );
+			return null;
 		}
 		return (array)$row;
 	}
@@ -326,8 +329,11 @@ class WikiCronManager {
 	 * @param string $name
 	 * @return ManagedProcess
 	 */
-	public function getProcessFromCronName( string $name ): ManagedProcess {
+	public function getProcessFromCronName( string $name ): ?ManagedProcess {
 		$cron = $this->getCron( $name );
+		if ( !$cron ) {
+			return null;
+		}
 		return new ManagedProcess( json_decode( $cron['wc_steps'], true ), (int)$cron['wc_timeout'] );
 	}
 
