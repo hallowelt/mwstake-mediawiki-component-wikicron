@@ -240,7 +240,8 @@ class WikiCronManager {
 		$res = $db->select(
 			'wiki_cron',
 			[ 'wc_name', 'wc_interval', 'wc_manual_interval' ],
-			$conds
+			$conds,
+			__METHOD__
 		);
 		foreach ( $res as $row ) {
 			if ( $row->wc_manual_interval ) {
@@ -290,7 +291,9 @@ class WikiCronManager {
 	public function getAll(): array {
 		$res = $this->lb->getConnection( DB_REPLICA )->select(
 			'wiki_cron',
-			'*'
+			'*',
+			'',
+			__METHOD__
 		);
 		$ret = [];
 		foreach ( $res as $row ) {
