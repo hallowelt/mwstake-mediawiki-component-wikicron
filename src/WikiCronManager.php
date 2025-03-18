@@ -307,7 +307,8 @@ class WikiCronManager {
 		return (bool)$this->lb->getConnection( DB_REPLICA )->selectField(
 			'wiki_cron',
 			'1',
-			[ 'wc_name' => $key ]
+			[ 'wc_name' => $key ],
+			__METHOD__
 		);
 	}
 
