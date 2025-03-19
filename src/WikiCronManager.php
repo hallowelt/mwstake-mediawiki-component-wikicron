@@ -7,6 +7,7 @@ use DeferredUpdates;
 use Exception;
 use MWStake\MediaWiki\Component\ProcessManager\ManagedProcess;
 use Poliander\Cron\CronExpression;
+use Wikimedia\Rdbms\DBConnRef;
 use Wikimedia\Rdbms\ILoadBalancer;
 use Wikimedia\Rdbms\IResultWrapper;
 
@@ -351,6 +352,8 @@ class WikiCronManager {
 	 * @return bool
 	 */
 	private function isSetUp(): bool {
-		return $this->lb->getConnection( DB_REPLICA )->tableExists( 'wiki_cron' );
+		/** @var DBConnRef $db */
+		$db = $this->lb->getConnection( DB_REPLICA );
+		return $db->tableExists( 'wiki_cron', __METHOD__ );
 	}
 }
