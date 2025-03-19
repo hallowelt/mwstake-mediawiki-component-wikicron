@@ -79,7 +79,8 @@ class WikiCronManager {
 			$data['wc_enabled'] = 1;
 			$this->lb->getConnection( DB_PRIMARY )->insert(
 				'wiki_cron',
-				$data
+				$data,
+				__METHOD__
 			);
 		}
 	}
