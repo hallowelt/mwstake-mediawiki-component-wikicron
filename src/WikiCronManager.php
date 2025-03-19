@@ -277,7 +277,8 @@ class WikiCronManager {
 		$row = $this->lb->getConnection( DB_REPLICA )->selectRow(
 			'wiki_cron',
 			'*',
-			[ 'wc_name' => $key ]
+			[ 'wc_name' => $key ],
+			__METHOD__
 		);
 		if ( !$row ) {
 			return null;
