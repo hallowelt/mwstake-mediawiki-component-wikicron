@@ -72,7 +72,8 @@ class WikiCronManager {
 			$this->lb->getConnection( DB_PRIMARY )->update(
 				'wiki_cron',
 				$data,
-				[ 'wc_name' => $key ]
+				[ 'wc_name' => $key ],
+				__METHOD__
 			);
 		} elseif ( $hasChanges === null ) {
 			$data['wc_enabled'] = 1;
@@ -100,13 +101,15 @@ class WikiCronManager {
 			$this->lb->getConnection( DB_PRIMARY )->update(
 				'wiki_cron',
 				[ 'wc_manual_interval' => $interval ],
-				[ 'wc_name' => $key ]
+				[ 'wc_name' => $key ],
+				__METHOD__
 			);
 		} else {
 			$this->lb->getConnection( DB_PRIMARY )->update(
 				'wiki_cron',
 				[ 'wc_manual_interval' => null ],
-				[ 'wc_name' => $key ]
+				[ 'wc_name' => $key ],
+				__METHOD__
 			);
 		}
 	}
@@ -265,7 +268,8 @@ class WikiCronManager {
 		$this->lb->getConnection( DB_PRIMARY )->update(
 			'wiki_cron',
 			[ 'wc_enabled' => $enabled ? 1 : 0 ],
-			[ 'wc_name' => $key ]
+			[ 'wc_name' => $key ],
+			__METHOD__
 		);
 	}
 
