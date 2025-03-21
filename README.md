@@ -4,6 +4,9 @@ Mechanism for executing scheduled tasks in MediaWiki
 This allows extension to run [ProcessManager processes](https://github.com/hallowelt/mwstake-mediawiki-component-processmanager/blob/main/README.md)
  on a schedule, using standard crontab expression.
 
+## Compatibility
+- `1.0.x` -> MediaWiki 1.43
+
 ## Declare a cron
 
 Use the `MWStake.WikiCronManager` service to declare a cron.

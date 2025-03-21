@@ -6,7 +6,8 @@ return [
 
 	'MWStake.WikiCronManager' => static function ( MediaWikiServices $services ) {
 		return new MWStake\MediaWiki\Component\WikiCron\WikiCronManager(
-			$services->getDBLoadBalancer()
+			$services->getConnectionProvider(),
+			$services->getObjectCacheFactory()
 		);
 	},
 ];
