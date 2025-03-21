@@ -1,5 +1,6 @@
 <?php
 
+use MediaWiki\Maintenance\Maintenance;
 use MediaWiki\MediaWikiServices;
 use MWStake\MediaWiki\Component\ProcessManager\ProcessManager;
 use MWStake\MediaWiki\Component\WikiCron\WikiCronManager;
