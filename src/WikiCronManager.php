@@ -3,31 +3,33 @@
 namespace MWStake\MediaWiki\Component\WikiCron;
 
 use DateTime;
-use DeferredUpdates;
 use Exception;
+use MediaWiki\Deferred\DeferredUpdates;
 use MWStake\MediaWiki\Component\ProcessManager\ManagedProcess;
+use ObjectCacheFactory;
 use Poliander\Cron\CronExpression;
 use Wikimedia\Rdbms\DBConnRef;
-use Wikimedia\Rdbms\ILoadBalancer;
+use Wikimedia\Rdbms\IConnectionProvider;
 use Wikimedia\Rdbms\IResultWrapper;
 
 class WikiCronManager {
 
-	/**
-	 * @var ILoadBalancer
-	 */
-	protected $lb;
+	/** @var IConnectionProvider */
+	protected $connectionProvider;
 
-	/**
-	 * @var array
-	 */
+	/** @var ObjectCacheFactory */
+	private $objectCacheFactory;
+
+	/** @var array */
 	private $registry = [];
 
 	/**
-	 * @param ILoadBalancer $lb
+	 * @param IConnectionProvider $connectionProvider
+	 * @param ObjectCacheFactory $objectCacheFactory
 	 */
-	public function __construct( ILoadBalancer $lb ) {
-		$this->lb = $lb;
+	public function __construct( IConnectionProvider $connectionProvider, ObjectCacheFactory $objectCacheFactory ) {
+		$this->connectionProvider = $connectionProvider;
+		$this->objectCacheFactory = $objectCacheFactory;
 		DeferredUpdates::addCallableUpdate( function () {
 			foreach ( $this->registry as $key => $data ) {
 				$this->doRegisterCron( $key, $data['interval'], $data['process'] );
@@ -70,7 +72,7 @@ class WikiCronManager {
 		];
 		$hasChanges = $this->hasChanges( $key, $data );
 		if ( $hasChanges === true ) {
-			$this->lb->getConnection( DB_PRIMARY )->update(
+			$this->connectionProvider->getPrimaryDatabase()->update(
 				'wiki_cron',
 				$data,
 				[ 'wc_name' => $key ],
@@ -78,7 +80,7 @@ class WikiCronManager {
 			);
 		} elseif ( $hasChanges === null ) {
 			$data['wc_enabled'] = 1;
-			$this->lb->getConnection( DB_PRIMARY )->insert(
+			$this->connectionProvider->getPrimaryDatabase()->insert(
 				'wiki_cron',
 				$data,
 				__METHOD__
@@ -100,14 +102,14 @@ class WikiCronManager {
 			if ( !$ce->isValid() ) {
 				throw new \InvalidArgumentException( 'Invalid cron expression' );
 			}
-			$this->lb->getConnection( DB_PRIMARY )->update(
+			$this->connectionProvider->getPrimaryDatabase()->update(
 				'wiki_cron',
 				[ 'wc_manual_interval' => $interval ],
 				[ 'wc_name' => $key ],
 				__METHOD__
 			);
 		} else {
-			$this->lb->getConnection( DB_PRIMARY )->update(
+			$this->connectionProvider->getPrimaryDatabase()->update(
 				'wiki_cron',
 				[ 'wc_manual_interval' => null ],
 				[ 'wc_name' => $key ],
@@ -121,7 +123,7 @@ class WikiCronManager {
 	 * @return DateTime|null
 	 */
 	public function getLastRun( string $name ): array {
-		$row = $this->lb->getConnection( DB_REPLICA )->selectRow(
+		$row = $this->connectionProvider->getReplicaDatabase()->selectRow(
 			[ 'wch' => 'wiki_cron_history', 'p' => 'processes' ],
 			[ 'wch_time', 'p_state', 'p_exitstatus' ],
 			[ 'wch_cron' => $name ],
@@ -155,7 +157,7 @@ class WikiCronManager {
 	 * @return void
 	 */
 	public function storeHistory( string $name, string $pid ) {
-		$this->lb->getConnection( DB_PRIMARY )->insert(
+		$this->connectionProvider->getPrimaryDatabase()->insert(
 			'wiki_cron_history',
 			[
 				'wch_cron' => $name,
@@ -171,7 +173,7 @@ class WikiCronManager {
 	 * @return IResultWrapper
 	 */
 	public function getHistory( string $name ): IResultWrapper {
-		return $this->lb->getConnection( DB_REPLICA )->select(
+		return $this->connectionProvider->getReplicaDatabase()->select(
 			[ 'wch' => 'wiki_cron_history', 'p' => 'processes' ],
 			[ 'wch_time', 'p_state', 'p_exitcode', 'p_output' ],
 			[ 'wch_cron' => $name ],
@@ -237,12 +239,12 @@ class WikiCronManager {
 	 */
 	private function getPossibleIntervals( array $exclude = [] ) {
 		$intervals = [];
-		$db = $this->lb->getConnection( DB_REPLICA );
+		$dbr = $this->connectionProvider->getReplicaDatabase();
 		$conds = [ 'wc_enabled' => 1 ];
 		if ( $exclude ) {
-			$conds[] = 'wc_name NOT IN (' . $db->makeList( $exclude ) . ')';
+			$conds[] = 'wc_name NOT IN (' . $dbr->makeList( $exclude ) . ')';
 		}
-		$res = $db->select(
+		$res = $dbr->select(
 			'wiki_cron',
 			[ 'wc_name', 'wc_interval', 'wc_manual_interval' ],
 			$conds,
@@ -267,7 +269,7 @@ class WikiCronManager {
 		if ( !$this->hasCron( $key ) ) {
 			throw new \InvalidArgumentException( 'Cron not found' );
 		}
-		$this->lb->getConnection( DB_PRIMARY )->update(
+		$this->connectionProvider->getPrimaryDatabase()->update(
 			'wiki_cron',
 			[ 'wc_enabled' => $enabled ? 1 : 0 ],
 			[ 'wc_name' => $key ],
@@ -280,23 +282,35 @@ class WikiCronManager {
 	 * @return array
 	 */
 	public function getCron( string $key ): ?array {
-		$row = $this->lb->getConnection( DB_REPLICA )->selectRow(
-			'wiki_cron',
-			'*',
-			[ 'wc_name' => $key ],
-			__METHOD__
+		$objectCache = $this->objectCacheFactory->getLocalServerInstance();
+		$fname = __METHOD__;
+
+		return $objectCache->getWithSetCallback(
+			$objectCache->makeKey( 'mwscomponentwikicron-getcron', $key ),
+			$objectCache::TTL_PROC_SHORT,
+			function () use ( $key, $fname ) {
+				$dbr = $this->connectionProvider->getReplicaDatabase();
+				$row = $dbr->newSelectQueryBuilder()
+					->table( 'wiki_cron' )
+					->field( $dbr::ALL_ROWS )
+					->where( [ 'wc_name' => $key ] )
+					->caller( $fname )
+					->fetchRow();
+
+				if ( !$row ) {
+					return null;
+				}
+
+				return (array)$row;
+			}
 		);
-		if ( !$row ) {
-			return null;
-		}
-		return (array)$row;
 	}
 
 	/**
 	 * @return array
 	 */
 	public function getAll(): array {
-		$res = $this->lb->getConnection( DB_REPLICA )->select(
+		$res = $this->connectionProvider->getReplicaDatabase()->select(
 			'wiki_cron',
 			'*',
 			'',
@@ -314,7 +328,7 @@ class WikiCronManager {
 	 * @return bool
 	 */
 	private function hasCron( string $key ): bool {
-		return (bool)$this->lb->getConnection( DB_REPLICA )->selectField(
+		return (bool)$this->connectionProvider->getReplicaDatabase()->selectField(
 			'wiki_cron',
 			'1',
 			[ 'wc_name' => $key ],
@@ -352,8 +366,17 @@ class WikiCronManager {
 	 * @return bool
 	 */
 	private function isSetUp(): bool {
-		/** @var DBConnRef $db */
-		$db = $this->lb->getConnection( DB_REPLICA );
-		return $db->tableExists( 'wiki_cron', __METHOD__ );
+		$objectCache = $this->objectCacheFactory->getLocalServerInstance();
+		$fname = __METHOD__;
+
+		return $objectCache->getWithSetCallback(
+			$objectCache->makeKey( 'mwscomponentwikicron-issetup' ),
+			$objectCache::TTL_PROC_SHORT,
+			function () use ( $fname ) {
+				/** @var DBConnRef $dbr */
+				$dbr = $this->connectionProvider->getReplicaDatabase();
+				return $dbr->tableExists( 'wiki_cron', $fname );
+			}
+		);
 	}
 }
