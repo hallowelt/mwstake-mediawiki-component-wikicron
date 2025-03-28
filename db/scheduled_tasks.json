@@ -1,18 +1,9 @@
 [
 	{
-		"name": "wiki_cron",
+		"name": "scheduled_tasks",
 		"columns": [
 			{
-				"name": "wc_id",
-				"type": "integer",
-				"options": {
-					"unsigned": true,
-					"notnull": true,
-					"autoincrement": true
-				}
-			},
-			{
-				"name": "wc_name",
+				"name": "st_id",
 				"type": "binary",
 				"options": {
 					"length": 255,
@@ -20,7 +11,7 @@
 				}
 			},
 			{
-				"name": "wc_interval",
+				"name": "st_interval",
 				"type": "binary",
 				"options": {
 					"length": 255,
@@ -28,7 +19,7 @@
 				}
 			},
 			{
-				"name": "wc_enabled",
+				"name": "st_enabled",
 				"type": "mwtinyint",
 				"options": {
 					"unsigned": true,
@@ -36,45 +27,31 @@
 				}
 			},
 			{
-				"name": "wc_last_run",
+				"name": "st_last_run",
 				"type": "mwtimestamp",
 				"options": {
 					"notnull": false
 				}
 			},
 			{
-				"name": "wc_steps",
+				"name": "st_next_run",
 				"type": "text",
-				"options": {
-					"notnull": false
-				}
-			},
-			{
-				"name": "wc_timeout",
-				"type": "integer",
+				"type": "mwtimestamp",
 				"options": {
 					"notnull": true
-				}
-			},
-			{
-				"name": "wc_manual_interval",
-				"type": "binary",
-				"options": {
-					"length": 255,
-					"notnull": false
 				}
 			}
 		],
 		"indexes": [],
 		"pk": [
-			"wc_id"
+			"st_id"
 		]
 	},
 	{
-		"name": "wiki_cron_history",
+		"name": "scheduled_task_history",
 		"columns": [
 			{
-				"name": "wch_cron",
+				"name": "sth_task",
 				"type": "binary",
 				"options": {
 					"length": 255,
@@ -82,14 +59,14 @@
 				}
 			},
 			{
-				"name": "wch_time",
+				"name": "sth_time",
 				"type": "mwtimestamp",
 				"options": {
 					"notnull": true
 				}
 			},
 			{
-				"name": "wch_pid",
+				"name": "sth_pid",
 				"type": "binary",
 				"options": {
 					"length": 128,

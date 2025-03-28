@@ -6,7 +6,7 @@ if ( defined( 'MWSTAKE_MEDIAWIKI_COMPONENT_WIKICRON_VERSION' ) ) {
 	return;
 }
 
-define( 'MWSTAKE_MEDIAWIKI_COMPONENT_WIKICRON_VERSION', '1.0.6' );
+define( 'MWSTAKE_MEDIAWIKI_COMPONENT_WIKICRON_VERSION', '2.0.0' );
 
 Bootstrapper::getInstance()
 	->register( 'wikicron', static function () {
@@ -18,12 +18,12 @@ Bootstrapper::getInstance()
 				$dbType = $updater->getDB()->getType();
 
 				$updater->addExtensionTable(
-					'wiki_cron',
-					__DIR__ . '/db/' . $dbType . '/wiki-cron.sql'
+					'scheduled_tasks',
+					__DIR__ . '/db/' . $dbType . '/scheduled_tasks.sql'
 				);
 				$updater->addExtensionTable(
-					'wiki_cron_history',
-					__DIR__ . '/db/' . $dbType . '/wiki-cron.sql'
+					'scheduled_tasks_history',
+					__DIR__ . '/db/' . $dbType . '/scheduled_tasks.sql'
 				);
 			} );
 		};
@@ -31,4 +31,19 @@ Bootstrapper::getInstance()
 			'class' => 'MWStake\MediaWiki\Component\WikiCron\WikiCronPlugin',
 			'services' => [ 'MWStake.WikiCronManager' ]
 		];
+		$GLOBALS['mwsgWikiCronOptions'] = [
+			"*" => [
+				"basetime" => [ 1, 0, 0 ],
+				"once-a-week-day" => "sunday"
+			]
+		];
+
+		$GLOBALS['mwsgRunJobsTriggerOptions'] = [
+			"*" => [
+				"basetime" => [ 1, 0, 0 ],
+				"once-a-week-day" => "sunday"
+			]
+		];
+
+		$GLOBALS['mwsgWikiCronHandlerRegistry'] = [];
 	} );
