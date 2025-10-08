@@ -1,0 +1,70 @@
+{
+	"before": {
+		"name": "wiki_cron_history",
+		"columns": [
+			{
+				"name": "wch_cron",
+				"type": "binary",
+				"options": {
+					"length": 255,
+					"notnull": true
+				}
+			},
+			{
+				"name": "wch_time",
+				"type": "mwtimestamp",
+				"options": {
+					"notnull": true
+				}
+			},
+			{
+				"name": "wch_pid",
+				"type": "binary",
+				"options": {
+					"length": 128,
+					"notnull": true
+				}
+			}
+		],
+		"indexes": [],
+		"pk": []
+	},
+	"after": {
+		"name": "wiki_cron_history",
+		"columns": [
+			{
+				"name": "wch_cron",
+				"type": "binary",
+				"options": {
+					"length": 255,
+					"notnull": true
+				}
+			},
+			{
+				"name": "wch_time",
+				"type": "mwtimestamp",
+				"options": {
+					"notnull": true
+				}
+			},
+			{
+				"name": "wch_pid",
+				"type": "binary",
+				"options": {
+					"length": 128,
+					"notnull": true
+				}
+			},
+			{
+				"name": "wch_wiki_id",
+				"type": "binary",
+				"options": {
+					"length": 255,
+					"notnull": false
+				}
+			}
+		],
+		"indexes": [],
+		"pk": []
+	}
+}

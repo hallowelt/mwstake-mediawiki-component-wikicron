@@ -6,7 +6,7 @@ if ( defined( 'MWSTAKE_MEDIAWIKI_COMPONENT_WIKICRON_VERSION' ) ) {
 	return;
 }
 
-define( 'MWSTAKE_MEDIAWIKI_COMPONENT_WIKICRON_VERSION', '1.0.7' );
+define( 'MWSTAKE_MEDIAWIKI_COMPONENT_WIKICRON_VERSION', '2.0.0' );
 
 Bootstrapper::getInstance()
 	->register( 'wikicron', static function () {
@@ -25,10 +25,25 @@ Bootstrapper::getInstance()
 					'wiki_cron_history',
 					__DIR__ . '/db/' . $dbType . '/wiki-cron.sql'
 				);
+				$updater->addExtensionField(
+					'wiki_cron',
+					'wc_wiki_id',
+					__DIR__ . '/db/' . $dbType . '/patch_cron_wiki_id.sql'
+				);
+				$updater->addExtensionField(
+					'wiki_cron_history',
+					'wch_wiki_id',
+					__DIR__ . '/db/' . $dbType . '/patch_cron_history_wiki_id.sql'
+				);
 			} );
 		};
 		$GLOBALS['mwsgProcessManagerPlugins']['wikicron'] = [
 			'class' => 'MWStake\MediaWiki\Component\WikiCron\WikiCronPlugin',
 			'services' => [ 'MWStake.WikiCronManager' ]
+		];
+
+		$GLOBALS['mwsgWikiCronStore'] = [
+			'class' => \MWStake\MediaWiki\Component\WikiCron\LocalDatabaseStore::class,
+			'services' => [ "DBLoadBalancer" ]
 		];
 	} );

@@ -1,0 +1,152 @@
+{
+	"before": {
+		"name": "wiki_cron",
+		"columns": [
+			{
+				"name": "wc_id",
+				"type": "integer",
+				"options": {
+					"unsigned": true,
+					"notnull": true,
+					"autoincrement": true
+				}
+			},
+			{
+				"name": "wc_name",
+				"type": "binary",
+				"options": {
+					"length": 255,
+					"notnull": true
+				}
+			},
+			{
+				"name": "wc_interval",
+				"type": "binary",
+				"options": {
+					"length": 255,
+					"notnull": true
+				}
+			},
+			{
+				"name": "wc_enabled",
+				"type": "mwtinyint",
+				"options": {
+					"unsigned": true,
+					"notnull": true
+				}
+			},
+			{
+				"name": "wc_last_run",
+				"type": "mwtimestamp",
+				"options": {
+					"notnull": false
+				}
+			},
+			{
+				"name": "wc_steps",
+				"type": "text",
+				"options": {
+					"notnull": false
+				}
+			},
+			{
+				"name": "wc_timeout",
+				"type": "integer",
+				"options": {
+					"notnull": true
+				}
+			},
+			{
+				"name": "wc_manual_interval",
+				"type": "binary",
+				"options": {
+					"length": 255,
+					"notnull": false
+				}
+			}
+		],
+		"indexes": [],
+		"pk": [
+			"wc_id"
+		]
+	},
+	"after": {
+		"name": "wiki_cron",
+		"columns": [
+			{
+				"name": "wc_id",
+				"type": "integer",
+				"options": {
+					"unsigned": true,
+					"notnull": true,
+					"autoincrement": true
+				}
+			},
+			{
+				"name": "wc_name",
+				"type": "binary",
+				"options": {
+					"length": 255,
+					"notnull": true
+				}
+			},
+			{
+				"name": "wc_interval",
+				"type": "binary",
+				"options": {
+					"length": 255,
+					"notnull": true
+				}
+			},
+			{
+				"name": "wc_enabled",
+				"type": "mwtinyint",
+				"options": {
+					"unsigned": true,
+					"notnull": true
+				}
+			},
+			{
+				"name": "wc_last_run",
+				"type": "mwtimestamp",
+				"options": {
+					"notnull": false
+				}
+			},
+			{
+				"name": "wc_steps",
+				"type": "text",
+				"options": {
+					"notnull": false
+				}
+			},
+			{
+				"name": "wc_timeout",
+				"type": "integer",
+				"options": {
+					"notnull": true
+				}
+			},
+			{
+				"name": "wc_manual_interval",
+				"type": "binary",
+				"options": {
+					"length": 255,
+					"notnull": false
+				}
+			},
+			{
+				"name": "wc_wiki_id",
+				"type": "binary",
+				"options": {
+					"length": 255,
+					"notnull": false
+				}
+			}
+		],
+		"indexes": [],
+		"pk": [
+			"wc_id"
+		]
+	}
+}
