@@ -8,25 +8,28 @@ use MediaWiki\Deferred\DeferredUpdates;
 use MWStake\MediaWiki\Component\ProcessManager\ManagedProcess;
 use ObjectCacheFactory;
 use Poliander\Cron\CronExpression;
-use Psr\Log\LoggerInterface;
+use Wikimedia\Rdbms\DBConnRef;
 use Wikimedia\Rdbms\IConnectionProvider;
 use Wikimedia\Rdbms\IResultWrapper;
 
 class WikiCronManager {
 
+	/** @var IConnectionProvider */
+	protected $connectionProvider;
+
+	/** @var ObjectCacheFactory */
+	private $objectCacheFactory;
+
 	/** @var array */
 	private $registry = [];
 
 	/**
-	 * @param ICronStore $cronStore
+	 * @param IConnectionProvider $connectionProvider
 	 * @param ObjectCacheFactory $objectCacheFactory
-	 * @param LoggerInterface $logger
 	 */
-	public function __construct(
-		private readonly ICronStore $cronStore,
-		private readonly ObjectCacheFactory $objectCacheFactory,
-		private readonly LoggerInterface $logger
-	) {
+	public function __construct( IConnectionProvider $connectionProvider, ObjectCacheFactory $objectCacheFactory ) {
+		$this->connectionProvider = $connectionProvider;
+		$this->objectCacheFactory = $objectCacheFactory;
 		DeferredUpdates::addCallableUpdate( function () {
 			foreach ( $this->registry as $key => $data ) {
 				$this->doRegisterCron( $key, $data['interval'], $data['process'] );
@@ -61,16 +64,27 @@ class WikiCronManager {
 		if ( !$ce->isValid() ) {
 			throw new \InvalidArgumentException( 'Invalid cron expression' );
 		}
-
-		$hasChanges = $this->cronStore->hasChanges( $key, $interval, $process );
+		$data = [
+			'wc_name' => $key,
+			'wc_interval' => $interval,
+			'wc_steps' => json_encode( $process->getSteps() ),
+			'wc_timeout' => $process->getTimeout()
+		];
+		$hasChanges = $this->hasChanges( $key, $data );
 		if ( $hasChanges === true ) {
-			if ( !$this->cronStore->updateCron( $key, $interval, $process ) ) {
-				$this->logger->error( 'Failed to update cron {key}', [ 'key' => $key ] );
-			}
+			$this->connectionProvider->getPrimaryDatabase()->update(
+				'wiki_cron',
+				$data,
+				[ 'wc_name' => $key ],
+				__METHOD__
+			);
 		} elseif ( $hasChanges === null ) {
-			if ( !$this->cronStore->insertCron( $key, $interval, $process ) ) {
-				$this->logger->error( 'Failed to insert cron {key}', [ 'key' => $key ] );
-			}
+			$data['wc_enabled'] = 1;
+			$this->connectionProvider->getPrimaryDatabase()->insert(
+				'wiki_cron',
+				$data,
+				__METHOD__
+			);
 		}
 	}
 
@@ -80,7 +94,7 @@ class WikiCronManager {
 	 * @return void
 	 */
 	public function setInterval( string $key, string $interval ) {
-		if ( !$this->cronStore->hasCron( $key ) ) {
+		if ( !$this->hasCron( $key ) ) {
 			throw new \InvalidArgumentException( 'Cron not found' );
 		}
 		if ( $interval !== 'default' ) {
@@ -88,9 +102,19 @@ class WikiCronManager {
 			if ( !$ce->isValid() ) {
 				throw new \InvalidArgumentException( 'Invalid cron expression' );
 			}
-			$this->cronStore->setInterval( $key, $interval );
+			$this->connectionProvider->getPrimaryDatabase()->update(
+				'wiki_cron',
+				[ 'wc_manual_interval' => $interval ],
+				[ 'wc_name' => $key ],
+				__METHOD__
+			);
 		} else {
-			$this->cronStore->setInterval( $key, null );
+			$this->connectionProvider->getPrimaryDatabase()->update(
+				'wiki_cron',
+				[ 'wc_manual_interval' => null ],
+				[ 'wc_name' => $key ],
+				__METHOD__
+			);
 		}
 	}
 
@@ -99,17 +123,49 @@ class WikiCronManager {
 	 * @return DateTime|null
 	 */
 	public function getLastRun( string $name ): array {
-		return $this->cronStore->getLastRun( $name );
+		$row = $this->connectionProvider->getReplicaDatabase()->selectRow(
+			[ 'wch' => 'wiki_cron_history', 'p' => 'processes' ],
+			[ 'wch_time', 'p_state', 'p_exitstatus' ],
+			[ 'wch_cron' => $name ],
+			__METHOD__,
+			[ 'ORDER BY' => 'wch_time DESC' ],
+			[ 'p' => [ 'LEFT JOIN', [ 'wch_pid=p_pid' ] ] ]
+		);
+		if ( !$row ) {
+			return [
+				'time' => null,
+				'status' => ''
+			];
+		}
+		$lr = DateTime::createFromFormat( 'YmdHis', $row->wch_time );
+		if ( $lr === false ) {
+			return [
+				'time' => null,
+				'status' => ''
+			];
+		}
+		return [
+			'time' => $lr,
+			'status' => $row->p_state,
+			'exitstatus' => $row->p_exitstatus
+		];
 	}
 
 	/**
 	 * @param string $name
-	 * @param string $wikiId
 	 * @param string $pid
 	 * @return void
 	 */
-	public function storeHistory( string $name, string $wikiId, string $pid ) {
-		$this->cronStore->storeHistory( $name, $wikiId, $pid );
+	public function storeHistory( string $name, string $pid ) {
+		$this->connectionProvider->getPrimaryDatabase()->insert(
+			'wiki_cron_history',
+			[
+				'wch_cron' => $name,
+				'wch_pid' => $pid,
+				'wch_time' => wfTimestampNow()
+			],
+			__METHOD__
+		);
 	}
 
 	/**
@@ -117,7 +173,14 @@ class WikiCronManager {
 	 * @return IResultWrapper
 	 */
 	public function getHistory( string $name ): IResultWrapper {
-		return $this->cronStore->getHistory( $name );
+		return $this->connectionProvider->getReplicaDatabase()->select(
+			[ 'wch' => 'wiki_cron_history', 'p' => 'processes' ],
+			[ 'wch_time', 'p_state', 'p_exitcode', 'p_output' ],
+			[ 'wch_cron' => $name ],
+			__METHOD__,
+			[ 'ORDER BY' => 'wch_time DESC', 'LIMIT' => 20 ],
+			[ 'p' => [ 'LEFT JOIN', [ 'wch_pid=p_pid' ] ] ]
+		);
 	}
 
 	/**
@@ -134,28 +197,20 @@ class WikiCronManager {
 		if ( $lastRun !== null ) {
 			$lastRun = new \DateTime( "@$lastRun" );
 			while ( $date > $lastRun ) {
-				$due = array_merge_recursive( $this->evaluate( $date, $due ), $due );
+				$due = array_merge( $this->evaluate( $date, $due ), $due );
 				$date->modify( '-1 minute' );
 			}
 		} else {
 			$date->setTime( $date->format( 'H' ), $date->format( 'i' ), 0 );
 			$due = $this->evaluate( $date );
 		}
-		$due = array_map( static function ( $a ) {
-			return array_unique( $a );
-		}, $due );
+		$due = array_unique( $due );
 		$processes = [];
-		foreach ( $due as $name => $wikis ) {
-			foreach ( $wikis as $wikiId ) {
-				$process = $this->getProcessFromCronName( $name, $wikiId );
-				if ( $process ) {
-					if ( !isset( $processes[$name] ) ) {
-						$processes[$name] = [];
-					}
-					$processes[$name][$wikiId] = $process;
-				}
+		foreach ( $due as $name ) {
+			$process = $this->getProcessFromCronName( $name );
+			if ( $process ) {
+				$processes[$name] = $process;
 			}
-
 		}
 		return $processes;
 	}
@@ -168,20 +223,41 @@ class WikiCronManager {
 	 */
 	private function evaluate( DateTime $time, array $exclude = [] ): array {
 		$due = [];
-		$possible = $this->cronStore->getPossibleIntervals( $exclude );
-		foreach ( $possible as $name => $wikis ) {
-			foreach ( $wikis as $wikiId => $interval ) {
-				$exp = new CronExpression( $interval );
-				if ( $exp->isValid() && $exp->isMatching( $time ) ) {
-					if ( !isset( $due[$name] ) ) {
-						$due[$name] = [];
-					}
-					$due[$name][] = $wikiId;
-				}
+		$possible = $this->getPossibleIntervals( $exclude );
+		foreach ( $possible as $name => $interval ) {
+			$exp = new CronExpression( $interval );
+			if ( $exp->isValid() && $exp->isMatching( $time ) ) {
+				$due[] = $name;
 			}
-
 		}
 		return $due;
+	}
+
+	/**
+	 * @param array $exclude
+	 * @return array
+	 */
+	private function getPossibleIntervals( array $exclude = [] ) {
+		$intervals = [];
+		$dbr = $this->connectionProvider->getReplicaDatabase();
+		$conds = [ 'wc_enabled' => 1 ];
+		if ( $exclude ) {
+			$conds[] = 'wc_name NOT IN (' . $dbr->makeList( $exclude ) . ')';
+		}
+		$res = $dbr->select(
+			'wiki_cron',
+			[ 'wc_name', 'wc_interval', 'wc_manual_interval' ],
+			$conds,
+			__METHOD__
+		);
+		foreach ( $res as $row ) {
+			if ( $row->wc_manual_interval ) {
+				$intervals[$row->wc_name] = $row->wc_manual_interval;
+				continue;
+			}
+			$intervals[$row->wc_name] = $row->wc_interval;
+		}
+		return $intervals;
 	}
 
 	/**
@@ -190,26 +266,42 @@ class WikiCronManager {
 	 * @return void
 	 */
 	public function setEnabled( string $key, bool $enabled = true ) {
-		if ( !$this->cronStore->hasCron( $key ) ) {
+		if ( !$this->hasCron( $key ) ) {
 			throw new \InvalidArgumentException( 'Cron not found' );
 		}
-		$this->cronStore->setEnabled( $key, $enabled );
+		$this->connectionProvider->getPrimaryDatabase()->update(
+			'wiki_cron',
+			[ 'wc_enabled' => $enabled ? 1 : 0 ],
+			[ 'wc_name' => $key ],
+			__METHOD__
+		);
 	}
 
 	/**
 	 * @param string $key
 	 * @return array
 	 */
-	public function getCron( string $key, ?string $wikiId = null ): ?array {
+	public function getCron( string $key ): ?array {
 		$objectCache = $this->objectCacheFactory->getLocalServerInstance();
 		$fname = __METHOD__;
-		$wikiId = $wikiId ?? $this->cronStore->getWikiId();
 
 		return $objectCache->getWithSetCallback(
-			$objectCache->makeKey( 'mwscomponentwikicron-getcron', $key, $wikiId ),
+			$objectCache->makeKey( 'mwscomponentwikicron-getcron', $key ),
 			$objectCache::TTL_PROC_SHORT,
-			function () use ( $key, $fname, $wikiId ) {
-				return $this->cronStore->getCron( $key, $wikiId );
+			function () use ( $key, $fname ) {
+				$dbr = $this->connectionProvider->getReplicaDatabase();
+				$row = $dbr->newSelectQueryBuilder()
+					->table( 'wiki_cron' )
+					->field( $dbr::ALL_ROWS )
+					->where( [ 'wc_name' => $key ] )
+					->caller( $fname )
+					->fetchRow();
+
+				if ( !$row ) {
+					return null;
+				}
+
+				return (array)$row;
 			}
 		);
 	}
@@ -218,23 +310,56 @@ class WikiCronManager {
 	 * @return array
 	 */
 	public function getAll(): array {
-		return $this->cronStore->getAll();
+		$res = $this->connectionProvider->getReplicaDatabase()->select(
+			'wiki_cron',
+			'*',
+			'',
+			__METHOD__
+		);
+		$ret = [];
+		foreach ( $res as $row ) {
+			$ret[] = (array)$row;
+		}
+		return $ret;
+	}
+
+	/**
+	 * @param string $key
+	 * @return bool
+	 */
+	private function hasCron( string $key ): bool {
+		return (bool)$this->connectionProvider->getReplicaDatabase()->selectField(
+			'wiki_cron',
+			'1',
+			[ 'wc_name' => $key ],
+			__METHOD__
+		);
+	}
+
+	/**
+	 * @param string $key
+	 * @param array $data
+	 * @return bool|null null if cannot find cron, true if has changes, false if no changes
+	 */
+	private function hasChanges( string $key, array $data ): ?bool {
+		$cron = $this->getCron( $key );
+		if ( !$cron ) {
+			return null;
+		}
+		$diff = array_diff_assoc( $data, $cron );
+		return !empty( $diff );
 	}
 
 	/**
 	 * @param string $name
 	 * @return ManagedProcess
 	 */
-	public function getProcessFromCronName( string $name, ?string $wikiId = null ): ?ManagedProcess {
-		$wikiId = $wikiId ?? $this->cronStore->getWikiId();
-		$cron = $this->getCron( $name, $wikiId );
+	public function getProcessFromCronName( string $name ): ?ManagedProcess {
+		$cron = $this->getCron( $name );
 		if ( !$cron ) {
 			return null;
 		}
-		$process = new ManagedProcess( json_decode( $cron['wc_steps'], true ), (int)$cron['wc_timeout'] );
-		$additionalArgs = $this->cronStore->getProcessAdditionalArgs( $name, $wikiId );
-		$process->setAdditionalArgs( $additionalArgs );
-		return $process;
+		return new ManagedProcess( json_decode( $cron['wc_steps'], true ), (int)$cron['wc_timeout'] );
 	}
 
 	/**
@@ -248,7 +373,9 @@ class WikiCronManager {
 			$objectCache->makeKey( 'mwscomponentwikicron-issetup' ),
 			$objectCache::TTL_PROC_SHORT,
 			function () use ( $fname ) {
-				return $this->cronStore->isReady();
+				/** @var DBConnRef $dbr */
+				$dbr = $this->connectionProvider->getReplicaDatabase();
+				return $dbr->tableExists( 'wiki_cron', $fname );
 			}
 		);
 	}

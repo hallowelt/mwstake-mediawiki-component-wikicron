@@ -61,8 +61,6 @@ class WikiCron extends Maintenance {
 				$cron = $manager->getCron( $name );
 				$history = $manager->getHistory( $name );
 			} catch ( Exception $e ) {
-
-				var_dump( $e->getMessage() );
 				$this->error( "Requested cron not found\n" );
 				$this->outputList( $manager );
 				return;
