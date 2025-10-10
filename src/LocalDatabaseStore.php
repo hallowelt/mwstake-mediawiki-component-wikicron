@@ -140,11 +140,12 @@ class LocalDatabaseStore implements ICronStore {
 	 */
 	public function getPossibleIntervals( array $exclude = [] ): array {
 		$intervals = [];
-		$query = $this->getDB( DB_REPLICA )->newSelectQueryBuilder();
+		$db = $this->getDB( DB_REPLICA );
+		$query = $db->newSelectQueryBuilder();
 		$query->from( 'wiki_cron' );
 		$query->conds( [ 'wc_enabled' => 1 ] );
 		if ( $exclude ) {
-			$query->conds( 'wc_name NOT IN (' . $query->db()->makeList( $exclude ) . ')' );
+			$query->conds( 'wc_name NOT IN (' . $db->makeList( $exclude ) . ')' );
 		}
 		$query->select( [ 'wc_name', 'wc_interval', 'wc_manual_interval', 'wc_wiki_id' ] );
 
