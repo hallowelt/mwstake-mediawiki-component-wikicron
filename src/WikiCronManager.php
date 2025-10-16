@@ -9,7 +9,6 @@ use MWStake\MediaWiki\Component\ProcessManager\ManagedProcess;
 use ObjectCacheFactory;
 use Poliander\Cron\CronExpression;
 use Psr\Log\LoggerInterface;
-use Wikimedia\Rdbms\IConnectionProvider;
 use Wikimedia\Rdbms\IResultWrapper;
 
 class WikiCronManager {
@@ -209,6 +208,10 @@ class WikiCronManager {
 			$objectCache->makeKey( 'mwscomponentwikicron-getcron', $key, $wikiId ),
 			$objectCache::TTL_PROC_SHORT,
 			function () use ( $key, $fname, $wikiId ) {
+				if ( !$this->isRegistered( $key ) ) {
+					// Cron no longer registered
+					return null;
+				}
 				return $this->cronStore->getCron( $key, $wikiId );
 			}
 		);
@@ -219,6 +222,10 @@ class WikiCronManager {
 	 */
 	public function getAll(): array {
 		return $this->cronStore->getAll();
+	}
+
+	public function isRegistered( string $name ): bool {
+		return isset( $this->registry[$name] );
 	}
 
 	/**
