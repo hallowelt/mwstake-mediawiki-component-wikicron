@@ -95,7 +95,7 @@ class WikiCronManager {
 
 	/**
 	 * @param string $name
-	 * @return DateTime|null
+	 * @return array
 	 */
 	public function getLastRun( string $name ): array {
 		return $this->cronStore->getLastRun( $name );
@@ -108,6 +108,9 @@ class WikiCronManager {
 	 * @return void
 	 */
 	public function storeHistory( string $name, string $wikiId, string $pid ) {
+		if ( !$wikiId ) {
+			$wikiId = $this->cronStore->getWikiId();
+		}
 		$this->cronStore->storeHistory( $name, $wikiId, $pid );
 	}
 
@@ -169,6 +172,9 @@ class WikiCronManager {
 		$due = [];
 		$possible = $this->cronStore->getPossibleIntervals( $exclude );
 		foreach ( $possible as $name => $wikis ) {
+			if ( !$this->isRegistered( $name ) ) {
+				continue;
+			}
 			foreach ( $wikis as $wikiId => $interval ) {
 				$exp = new CronExpression( $interval );
 				if ( $exp->isValid() && $exp->isMatching( $time ) ) {
@@ -189,7 +195,7 @@ class WikiCronManager {
 	 * @return void
 	 */
 	public function setEnabled( string $key, bool $enabled = true ) {
-		if ( !$this->cronStore->hasCron( $key ) ) {
+		if ( !$this->cronStore->hasCron( $key ) || !$this->isRegistered( $key ) ) {
 			throw new \InvalidArgumentException( 'Cron not found' );
 		}
 		$this->cronStore->setEnabled( $key, $enabled );
@@ -197,17 +203,17 @@ class WikiCronManager {
 
 	/**
 	 * @param string $key
-	 * @return array
+	 * @param string|null $wikiId
+	 * @return array|null
 	 */
 	public function getCron( string $key, ?string $wikiId = null ): ?array {
 		$objectCache = $this->objectCacheFactory->getLocalServerInstance();
-		$fname = __METHOD__;
 		$wikiId = $wikiId ?? $this->cronStore->getWikiId();
 
 		return $objectCache->getWithSetCallback(
 			$objectCache->makeKey( 'mwscomponentwikicron-getcron', $key, $wikiId ),
 			$objectCache::TTL_PROC_SHORT,
-			function () use ( $key, $fname, $wikiId ) {
+			function () use ( $key, $wikiId ) {
 				if ( !$this->isRegistered( $key ) ) {
 					// Cron no longer registered
 					return null;
@@ -230,7 +236,8 @@ class WikiCronManager {
 
 	/**
 	 * @param string $name
-	 * @return ManagedProcess
+	 * @param string|null $wikiId
+	 * @return ManagedProcess|null
 	 */
 	public function getProcessFromCronName( string $name, ?string $wikiId = null ): ?ManagedProcess {
 		$wikiId = $wikiId ?? $this->cronStore->getWikiId();
@@ -249,12 +256,11 @@ class WikiCronManager {
 	 */
 	private function isSetUp(): bool {
 		$objectCache = $this->objectCacheFactory->getLocalServerInstance();
-		$fname = __METHOD__;
 
 		return $objectCache->getWithSetCallback(
 			$objectCache->makeKey( 'mwscomponentwikicron-issetup' ),
 			$objectCache::TTL_PROC_SHORT,
-			function () use ( $fname ) {
+			function () {
 				return $this->cronStore->isReady();
 			}
 		);

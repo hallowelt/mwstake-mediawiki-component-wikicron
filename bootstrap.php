@@ -25,6 +25,9 @@ Bootstrapper::getInstance()
 					'wiki_cron_history',
 					__DIR__ . '/db/' . $dbType . '/wiki-cron.sql'
 				);
+				$updater->addPostDatabaseUpdateMaintenance(
+					\MWStake\MediaWiki\Component\WikiCron\Maintenance\TruncateTables::class
+				);
 				$updater->addExtensionField(
 					'wiki_cron',
 					'wc_wiki_id',
@@ -35,6 +38,12 @@ Bootstrapper::getInstance()
 					'wch_wiki_id',
 					__DIR__ . '/db/' . $dbType . '/patch_cron_history_wiki_id.sql'
 				);
+				$updater->addExtensionIndex(
+					'wiki_cron',
+					'_fake_index_',
+					__DIR__ . '/db/' . $dbType . '/patch_cron_pk.sql'
+				);
+
 			} );
 		};
 		$GLOBALS['mwsgProcessManagerPlugins']['wikicron'] = [

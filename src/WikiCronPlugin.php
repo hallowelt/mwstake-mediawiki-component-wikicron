@@ -50,6 +50,7 @@ class WikiCronPlugin implements IProcessManagerPlugin, LoggerAwareInterface {
 			}
 		} catch ( Exception $e ) {
 			$this->logger->error( "Wiki-cron plugin: failed getting due crons: " . $e->getMessage() );
+			var_dump( $e->getTraceAsString() );
 		}
 
 		return $infos;
