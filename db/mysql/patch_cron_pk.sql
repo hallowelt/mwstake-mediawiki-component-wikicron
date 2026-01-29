@@ -6,7 +6,7 @@ ALTER TABLE /*_*/wiki_cron
   MODIFY wc_id INT UNSIGNED NOT NULL;
 DROP INDEX `primary` ON /*_*/wiki_cron;
 ALTER TABLE /*_*/wiki_cron
-  DROP wc_id,
+  CHANGE wc_id wc_id INT UNSIGNED DEFAULT 1 NOT NULL,
   CHANGE wc_wiki_id wc_wiki_id VARBINARY(255) NOT NULL;
 ALTER TABLE /*_*/wiki_cron
   ADD PRIMARY KEY (wc_name, wc_wiki_id);

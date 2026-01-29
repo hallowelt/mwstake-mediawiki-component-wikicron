@@ -4,6 +4,7 @@
 -- See https://www.mediawiki.org/wiki/Manual:Schema_changes
 CREATE TEMPORARY TABLE /*_*/__temp__wiki_cron AS
 SELECT
+  wc_id,
   wc_name,
   wc_interval,
   wc_enabled,
@@ -19,6 +20,7 @@ DROP TABLE /*_*/wiki_cron;
 CREATE TABLE /*_*/wiki_cron (
     wc_name BLOB NOT NULL,
     wc_wiki_id BLOB NOT NULL,
+    wc_id INTEGER UNSIGNED DEFAULT 1 NOT NULL,
     wc_interval BLOB NOT NULL,
     wc_enabled SMALLINT UNSIGNED NOT NULL,
     wc_last_run BLOB DEFAULT NULL,
@@ -28,11 +30,12 @@ CREATE TABLE /*_*/wiki_cron (
     PRIMARY KEY(wc_name, wc_wiki_id)
   );
 INSERT INTO /*_*/wiki_cron (
-    wc_name, wc_interval, wc_enabled,
+    wc_id, wc_name, wc_interval, wc_enabled,
     wc_last_run, wc_steps, wc_timeout,
     wc_manual_interval, wc_wiki_id
   )
 SELECT
+  wc_id,
   wc_name,
   wc_interval,
   wc_enabled,

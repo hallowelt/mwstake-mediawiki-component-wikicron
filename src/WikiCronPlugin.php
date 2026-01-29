@@ -70,4 +70,12 @@ class WikiCronPlugin implements IProcessManagerPlugin, LoggerAwareInterface {
 	public function setLogger( LoggerInterface $logger ) {
 		$this->logger = $logger;
 	}
+
+	/**
+	 * @param ProcessInfo $info
+	 * @return void
+	 */
+	public function finishProcess( ProcessInfo $info ): void {
+		// NOOP - Compatibility
+	}
 }

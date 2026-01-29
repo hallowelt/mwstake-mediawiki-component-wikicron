@@ -82,6 +82,15 @@
 		"name": "wiki_cron",
 		"columns": [
 			{
+				"name": "wc_id",
+				"type": "integer",
+				"options": {
+					"unsigned": true,
+					"notnull": true,
+					"default": "1"
+				}
+			},
+			{
 				"name": "wc_name",
 				"type": "binary",
 				"options": {

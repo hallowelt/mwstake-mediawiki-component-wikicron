@@ -3,11 +3,16 @@
 -- Do not modify this file directly.
 -- See https://www.mediawiki.org/wiki/Manual:Schema_changes
 CREATE TABLE /*_*/wiki_cron (
-  wc_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-  wc_name BLOB NOT NULL, wc_wiki_id BLOB NOT NULL,
-  wc_interval BLOB NOT NULL, wc_enabled SMALLINT UNSIGNED NOT NULL,
-  wc_last_run BLOB DEFAULT NULL, wc_steps CLOB DEFAULT NULL,
-  wc_timeout INTEGER NOT NULL, wc_manual_interval BLOB DEFAULT NULL
+  wc_name BLOB NOT NULL,
+  wc_wiki_id BLOB NOT NULL,
+  wc_id INTEGER UNSIGNED DEFAULT 1 NOT NULL,
+  wc_interval BLOB NOT NULL,
+  wc_enabled SMALLINT UNSIGNED NOT NULL,
+  wc_last_run BLOB DEFAULT NULL,
+  wc_steps CLOB DEFAULT NULL,
+  wc_timeout INTEGER NOT NULL,
+  wc_manual_interval BLOB DEFAULT NULL,
+  PRIMARY KEY(wc_name, wc_wiki_id)
 );
 
 

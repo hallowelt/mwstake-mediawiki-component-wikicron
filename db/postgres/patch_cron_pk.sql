@@ -5,7 +5,12 @@
 ALTER TABLE wiki_cron
   DROP CONSTRAINT wiki_cron_pkey;
 ALTER TABLE wiki_cron
-  DROP wc_id;
+  ALTER wc_id
+SET
+  DEFAULT 1;
+ALTER TABLE wiki_cron
+  ALTER wc_id
+  DROP DEFAULT;
 ALTER TABLE wiki_cron
   ALTER wc_wiki_id
 SET
