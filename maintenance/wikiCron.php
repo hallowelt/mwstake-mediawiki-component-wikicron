@@ -84,10 +84,14 @@ class WikiCron extends Maintenance {
 	 */
 	private function forceRun( string $name, WikiCronManager $manager ) {
 		$cron = $manager->getProcessFromCronName( $name );
+		if ( !$cron ) {
+			$this->error( "Requested cron not found\n" );
+			return;
+		}
 		/** @var ProcessManager $processManager */
 		$processManager = MediaWikiServices::getInstance()->getService( 'ProcessManager' );
 		$pid = $processManager->startProcess( $cron );
-		$manager->storeHistory( $name, $pid );
+		$manager->storeHistory( $name, '', $pid );
 		$this->output( "Started process: $pid" );
 	}
 

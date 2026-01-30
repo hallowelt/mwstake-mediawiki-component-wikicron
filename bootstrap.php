@@ -35,6 +35,11 @@ Bootstrapper::getInstance()
 					'wch_wiki_id',
 					__DIR__ . '/db/' . $dbType . '/patch_cron_history_wiki_id.sql'
 				);
+				$updater->addExtensionIndex(
+					'wiki_cron',
+					'_fake_index_',
+					__DIR__ . '/db/' . $dbType . '/patch_cron_pk.sql'
+				);
 			} );
 		};
 		$GLOBALS['mwsgProcessManagerPlugins']['wikicron'] = [
