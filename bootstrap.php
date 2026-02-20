@@ -6,7 +6,7 @@ if ( defined( 'MWSTAKE_MEDIAWIKI_COMPONENT_WIKICRON_VERSION' ) ) {
 	return;
 }
 
-define( 'MWSTAKE_MEDIAWIKI_COMPONENT_WIKICRON_VERSION', '2.0.3' );
+define( 'MWSTAKE_MEDIAWIKI_COMPONENT_WIKICRON_VERSION', '3.0.0' );
 
 Bootstrapper::getInstance()
 	->register( 'wikicron', static function () {
