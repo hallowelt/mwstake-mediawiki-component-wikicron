@@ -1,12 +1,13 @@
 <?php
 
+use MWStake\MediaWiki\Component\WikiCron\Maintenance\ClearDB;
 use MWStake\MediaWiki\ComponentLoader\Bootstrapper;
 
 if ( defined( 'MWSTAKE_MEDIAWIKI_COMPONENT_WIKICRON_VERSION' ) ) {
 	return;
 }
 
-define( 'MWSTAKE_MEDIAWIKI_COMPONENT_WIKICRON_VERSION', '2.0.3' );
+define( 'MWSTAKE_MEDIAWIKI_COMPONENT_WIKICRON_VERSION', '2.0.4' );
 
 Bootstrapper::getInstance()
 	->register( 'wikicron', static function () {
@@ -35,11 +36,7 @@ Bootstrapper::getInstance()
 					'wch_wiki_id',
 					__DIR__ . '/db/' . $dbType . '/patch_cron_history_wiki_id.sql'
 				);
-				$updater->addExtensionIndex(
-					'wiki_cron',
-					'_fake_index_',
-					__DIR__ . '/db/' . $dbType . '/patch_cron_pk.sql'
-				);
+				$updater->addPostDatabaseUpdateMaintenance( ClearDB::class );
 			} );
 		};
 		$GLOBALS['mwsgProcessManagerPlugins']['wikicron'] = [
