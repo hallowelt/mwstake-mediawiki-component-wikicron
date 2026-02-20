@@ -8,7 +8,7 @@
 				"options": {
 					"unsigned": true,
 					"notnull": true,
-					"default": "1"
+					"autoincrement": true
 				}
 			},
 			{
@@ -74,9 +74,7 @@
 			}
 		],
 		"indexes": [],
-		"pk": [
-			"wc_name", "wc_wiki_id"
-		]
+		"pk": [	"wc_id" ]
 	},
 	{
 		"name": "wiki_cron_history",

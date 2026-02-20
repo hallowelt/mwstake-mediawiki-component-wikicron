@@ -3,16 +3,16 @@
 -- Do not modify this file directly.
 -- See https://www.mediawiki.org/wiki/Manual:Schema_changes
 CREATE TABLE wiki_cron (
+  wc_id SERIAL NOT NULL,
   wc_name TEXT NOT NULL,
-  wc_wiki_id TEXT NOT NULL,
-  wc_id INT DEFAULT 1 NOT NULL,
   wc_interval TEXT NOT NULL,
   wc_enabled SMALLINT NOT NULL,
   wc_last_run TIMESTAMPTZ DEFAULT NULL,
   wc_steps TEXT DEFAULT NULL,
   wc_timeout INT NOT NULL,
   wc_manual_interval TEXT DEFAULT NULL,
-  PRIMARY KEY(wc_name, wc_wiki_id)
+  wc_wiki_id TEXT DEFAULT NULL,
+  PRIMARY KEY(wc_id)
 );
 
 
