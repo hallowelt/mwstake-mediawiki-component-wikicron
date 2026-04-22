@@ -1,9 +1,10 @@
 <?php
 
-namespace MWStake\MediaWiki\Component\WikiCron;
+namespace MWStake\MediaWiki\Component\WikiCron\Store;
 
 use MediaWiki\WikiMap\WikiMap;
 use MWStake\MediaWiki\Component\ProcessManager\ManagedProcess;
+use MWStake\MediaWiki\Component\WikiCron\ICronStore;
 use Wikimedia\Rdbms\IDatabase;
 use Wikimedia\Rdbms\ILoadBalancer;
 use Wikimedia\Rdbms\IResultWrapper;
