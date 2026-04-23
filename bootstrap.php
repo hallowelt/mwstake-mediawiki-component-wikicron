@@ -47,8 +47,8 @@ Bootstrapper::getInstance()
 
 		if ( !isset( $GLOBALS['mwsgWikiCronStore'] ) ) {
 			$GLOBALS['mwsgWikiCronStore'] = [
-				'class' => 'MWStake\MediaWiki\Component\WikiCron\WikiCronPlugin',
-				'services' => [ 'MWStake.WikiCronManager' ]
+				'class' => 'MWStake\MediaWiki\Component\WikiCron\Store\LocalDatabaseStore',
+				'services' => [ 'DBLoadBalancer' ]
 			];
 		}
 	} );
