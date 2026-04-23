@@ -11,7 +11,7 @@
 	],
 	"require": {
 		"composer/installers": "~1.0|~2",
-		"mwstake/mediawiki-component-processmanager": "~4",
+		"mwstake/mediawiki-component-processmanager": "~5",
 		"mwstake/mediawiki-componentloader": "~1",
 		"poliander/cron": "~3.0"
 	},
