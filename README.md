@@ -5,6 +5,10 @@ This allows extension to run [ProcessManager processes](https://github.com/hallo
  on a schedule, using standard crontab expression.
 
 ## Compatibility
+- `5.0.x` -> MediaWiki 1.47
+- `4.0.x` -> MediaWiki 1.43
+- `3.0.x` -> MediaWiki 1.43
+- `2.0.x` -> MediaWiki 1.43
 - `1.0.x` -> MediaWiki 1.43
 
 ## Declare a cron
