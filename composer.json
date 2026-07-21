@@ -16,20 +16,11 @@
 		"poliander/cron": "~3.0"
 	},
 	"require-dev": {
-		"mediawiki/mediawiki-codesniffer": "45.0.0",
-		"mediawiki/mediawiki-phan-config": "0.14.0",
-		"mediawiki/minus-x": "1.1.3",
+		"mediawiki/mediawiki-codesniffer": "51.0.0",
+		"mediawiki/mediawiki-phan-config": "0.20.0",
+		"mediawiki/minus-x": "2.0.1",
 		"php-parallel-lint/php-console-highlighter": "1.0.0",
 		"php-parallel-lint/php-parallel-lint": "1.4.0"
-	},
-	"autoload": {
-		"psr-4": {
-			"MWStake\\MediaWiki\\Component\\WikiCron\\": "src/",
-			"MWStake\\MediaWiki\\Component\\WikiCron\\Tests\\": "tests/"
-		},
-		"files": [
-			"bootstrap.php"
-		]
 	},
 	"scripts": {
 		"test": [
@@ -43,6 +34,15 @@
 		],
 		"phan": "phan -d . --long-progress-bar",
 		"phpcs": "phpcs -sp --cache"
+	},
+	"autoload": {
+		"psr-4": {
+			"MWStake\\MediaWiki\\Component\\WikiCron\\": "src/",
+			"MWStake\\MediaWiki\\Component\\WikiCron\\Tests\\": "tests/"
+		},
+		"files": [
+			"bootstrap.php"
+		]
 	},
 	"config": {
 		"allow-plugins": {

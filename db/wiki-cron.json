@@ -74,7 +74,9 @@
 			}
 		],
 		"indexes": [],
-		"pk": [	"wc_id" ]
+		"pk": [
+			"wc_id"
+		]
 	},
 	{
 		"name": "wiki_cron_history",
