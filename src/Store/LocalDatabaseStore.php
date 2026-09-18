@@ -201,12 +201,12 @@ class LocalDatabaseStore implements ICronStore {
 	/**
 	 * @inheritDoc
 	 */
-	public function getLastRun( string $key ): array {
+	public function getLastRun( string $key, ?string $wikidId = null ): array {
 		$row = $this->getDB( DB_REPLICA )->newSelectQueryBuilder()
 			->from( 'wiki_cron_history', 'wch' )
 			->from( 'processes', 'p' )
 			->select( [ 'wch_time', 'p_state', 'p_exitstatus' ] )
-			->where( [ 'wch_cron' => $key, 'wch_wiki_id' => $this->getWikiId() ] )
+			->where( [ 'wch_cron' => $key, 'wch_wiki_id' => $wikidId ?? $this->getWikiId() ] )
 			->caller( __METHOD__ )
 			->orderBy( [ 'wch_time' ], 'DESC' )
 			->leftJoin( 'processes', 'p', [ 'wch_pid = p_pid' ] )

@@ -30,6 +30,7 @@ Note: This does not need to be declared in an `extension function` but needs to 
 premature service access.
 
 Thats it! This process will be executed as declared in the cron expression. (as long as `processRunner` is running).
+If executions were missed (for example, runner downtime), WikiCron starts the process on the next evaluation cycle to catch up.
 
 # Info script
 

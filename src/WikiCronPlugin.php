@@ -36,7 +36,7 @@ class WikiCronPlugin implements IProcessManagerPlugin, LoggerAwareInterface {
 	public function run( ProcessManager $manager, ?int $lastRun ): array {
 		$infos = [];
 		try {
-			$due = $this->cronManager->getDue( $lastRun );
+			$due = $this->cronManager->getDue();
 			foreach ( $due as $name => $wikiProcesses ) {
 				foreach ( $wikiProcesses as $wikiId => $process ) {
 					$pid = $manager->startProcess( $process );

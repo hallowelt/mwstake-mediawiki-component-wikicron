@@ -82,9 +82,10 @@ interface ICronStore {
 
 	/**
 	 * @param string $key
+	 * @param string|null $wikiId
 	 * @return array
 	 */
-	public function getLastRun( string $key ): array;
+	public function getLastRun( string $key, ?string $wikiId ): array;
 
 	/**
 	 * @param string $key
