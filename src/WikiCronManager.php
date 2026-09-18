@@ -95,10 +95,11 @@ class WikiCronManager {
 
 	/**
 	 * @param string $name
+	 * @param string|null $wikiId
 	 * @return array
 	 */
-	public function getLastRun( string $name ): array {
-		return $this->cronStore->getLastRun( $name );
+	public function getLastRun( string $name, ?string $wikiId = null ): array {
+		return $this->cronStore->getLastRun( $name, $wikiId );
 	}
 
 	/**
@@ -123,26 +124,13 @@ class WikiCronManager {
 	}
 
 	/**
-	 * @param int|null $lastRun
 	 * @return array
 	 * @throws Exception
 	 */
-	public function getDue( ?int $lastRun ): array {
-		$due = [];
-		// If last run was more than a minute ago, get timestamps for each minute since
-		// then, otherwise just get the current minute
+	public function getDue(): array {
 		$date = new \DateTime();
 		$date->setTime( $date->format( 'H' ), $date->format( 'i' ), 0 );
-		if ( $lastRun !== null ) {
-			$lastRun = new \DateTime( "@$lastRun" );
-			while ( $date > $lastRun ) {
-				$due = array_merge_recursive( $this->evaluate( $date, $due ), $due );
-				$date->modify( '-1 minute' );
-			}
-		} else {
-			$date->setTime( $date->format( 'H' ), $date->format( 'i' ), 0 );
-			$due = $this->evaluate( $date );
-		}
+		$due = $this->evaluate( $date );
 		$due = array_map( static function ( $a ) {
 			return array_unique( $a );
 		}, $due );
@@ -176,8 +164,18 @@ class WikiCronManager {
 				continue;
 			}
 			foreach ( $wikis as $wikiId => $interval ) {
+				$lastRun = $this->getLastRun( $name, $wikiId );
+				$lastRunDateTime = $lastRun['time'] ?? null;
 				$exp = new CronExpression( $interval );
-				if ( $exp->isValid() && $exp->isMatching( $time ) ) {
+				if ( !$exp->isValid() ) {
+					continue;
+				}
+				$isDue = $exp->isMatching( $time );
+				if ( !$isDue && $lastRunDateTime instanceof DateTime ) {
+					$nextTimestamp = $exp->getNext( clone $lastRunDateTime );
+					$isDue = is_int( $nextTimestamp ) && $nextTimestamp <= $time->getTimestamp();
+				}
+				if ( $isDue ) {
 					if ( !isset( $due[$name] ) ) {
 						$due[$name] = [];
 					}

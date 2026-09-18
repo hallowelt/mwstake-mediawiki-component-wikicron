@@ -297,7 +297,7 @@ class RedisStore implements ICronStore {
 	/**
 	 * @inheritDoc
 	 */
-	public function getLastRun( string $key ): array {
+	public function getLastRun( string $key, ?string $wikiId = null ): array {
 		$conn = $this->getConnection();
 		if ( !$conn ) {
 			return [ 'time' => null, 'status' => '' ];
