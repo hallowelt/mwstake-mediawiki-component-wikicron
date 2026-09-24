@@ -226,7 +226,10 @@ class RedisStore implements ICronStore {
 				if ( !isset( $intervals[$name] ) ) {
 					$intervals[$name] = [];
 				}
-				$intervals[$name][$wikiId] = $data['wc_manual_interval'] ?? $data['wc_interval'];
+				$intervals[$name][$wikiId] = [
+					'interval' => $data['wc_manual_interval'] ?? $data['wc_interval'],
+					'lastRun' => $this->getLastRun( $name, $wikiId )['time']
+				];
 			}
 			return $intervals;
 		} catch ( RedisException $e ) {
@@ -251,10 +254,11 @@ class RedisStore implements ICronStore {
 		}
 		try {
 			$histKey = $this->historyKeyForWiki( $key, $wikiId );
+			$conn->multi();
+			$conn->del( $histKey );
 			$conn->lPush( $histKey, json_encode( $entry ) );
-			// Keep only the last 100 entries
-			$conn->lTrim( $histKey, 0, 99 );
-			return true;
+			$results = $conn->exec();
+			return $results !== false;
 		} catch ( RedisException $e ) {
 			$this->handleError( $conn, $e );
 			return false;
