@@ -163,9 +163,9 @@ class WikiCronManager {
 			if ( !$this->isRegistered( $name ) ) {
 				continue;
 			}
-			foreach ( $wikis as $wikiId => $interval ) {
-				$lastRun = $this->getLastRun( $name, $wikiId );
-				$lastRunDateTime = $lastRun['time'] ?? null;
+			foreach ( $wikis as $wikiId => $intervalData ) {
+				$interval = $intervalData['interval'];
+				$lastRunDateTime = $intervalData['lastRun'];
 				$exp = new CronExpression( $interval );
 				if ( !$exp->isValid() ) {
 					continue;
