@@ -5,6 +5,7 @@ This allows extension to run [ProcessManager processes](https://github.com/hallo
  on a schedule, using standard crontab expression.
 
 ## Compatibility
+- \>= `7.0.x` -> MediaWiki 1.47
 - \>= `1.0.x` -> MediaWiki 1.43
 
 ## Use in a MediaWiki extension
@@ -14,7 +15,7 @@ Require this component in the `composer.json` of your extension:
 ```json
 {
 	"require": {
-		"mwstake/mediawiki-component-wikicron": "~6"
+		"mwstake/mediawiki-component-wikicron": "~7"
 	}
 }
 ```
