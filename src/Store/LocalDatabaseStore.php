@@ -177,7 +177,7 @@ class LocalDatabaseStore implements ICronStore {
 			if ( $row->wc_manual_interval ) {
 				$interval = $row->wc_manual_interval;
 			}
-			$lastRun = \DateTime::createFromFormat( 'YmdHis', $row->wch_time );
+			$lastRun = \DateTime::createFromFormat( 'YmdHis', wfTimestamp( TS_MW, $row->wch_time ) );
 			$lastRunTime = null;
 			if ( $lastRun instanceof \DateTime ) {
 				$lastRunTime = $lastRun;
@@ -207,7 +207,7 @@ class LocalDatabaseStore implements ICronStore {
 			->row( [
 				'wch_cron' => $key,
 				'wch_pid' => $pid,
-				'wch_time' => wfTimestampNow(),
+				'wch_time' => $db->timestamp(),
 				'wch_wiki_id' => $wikiId,
 			] )
 			->caller( __METHOD__ )
@@ -258,7 +258,7 @@ class LocalDatabaseStore implements ICronStore {
 				'status' => ''
 			];
 		}
-		$lr = \DateTime::createFromFormat( 'YmdHis', $row->wch_time );
+		$lr = \DateTime::createFromFormat( 'YmdHis', wfTimestamp( TS_MW, $row->wch_time ) );
 		if ( $lr === false ) {
 			return [
 				'time' => null,
